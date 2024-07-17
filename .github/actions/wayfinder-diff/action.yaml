@@ -1,0 +1,40 @@
+{% raw %}
+name: Wayfinder diff (composite steps)
+description: Performs a Wayfinder diff and captures the output for use in other workflows
+# Schema: https://json.schemastore.org/github-action.json
+
+# Runs on the same runner and same work area as the main workflow.
+# No need to use 'build artifacts' to share files with the main workflow.
+# Env variables are inherited.
+# Secrets are not available -- must be passed explicitly as inputs or env vars.
+
+# inputs:
+#   example_input:
+#     description: 'Input to the reusable workflow'
+#     required: true
+#   other_example_input:
+#     required: true
+outputs:
+  result: 
+    description: Diff outcome
+    value: ${{ steps.diff.outcome }}
+  stdout: 
+    description: Diff standard output
+    value: ${{ steps.diff.outputs.stdout }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Wayfinder diff
+      id: diff
+      shell: bash
+      run: |
+        set +e
+        wf -w ${WAYFINDER_WORKSPACE} diff -f ./wayfinder --owner ${WAYFINDER_RESOURCE_OWNER} --prune --prune-scope all 2>&1 | tee stdout.txt
+        diffExitCode=$?
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "stdout<<$EOF" >> "$GITHUB_OUTPUT"
+        cat stdout.txt >> "$GITHUB_OUTPUT"
+        echo "$EOF" >> "$GITHUB_OUTPUT"
+        exit $diffExitCode
+{% endraw %}

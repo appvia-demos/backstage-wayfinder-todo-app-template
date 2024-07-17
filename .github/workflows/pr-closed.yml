@@ -8,29 +8,27 @@ on:
 permissions:
   contents: read
 
+env:
+  WAYFINDER_SERVER: ${{ vars.WAYFINDER_SERVER }}
+  WAYFINDER_TOKEN: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}
+  WAYFINDER_WORKSPACE: ${{ vars.WAYFINDER_WORKSPACE }}
+
+
 jobs:
   wf:
-    name: "Wayfinder version and toolbox image"
+    name: "Wayfinder toolbox"
     runs-on: ubuntu-latest
     container: quay.io/appvia-wf-dev/wftoolbox:latest
     outputs:
-      version: ${{ steps.version.outputs.WAYFINDER_VERSION }}
-      toolbox: ${{ steps.toolbox.outputs.WAYFINDER_TOOLBOX_IMAGE }}
+      version: ${{ steps.wayfinder.outputs.version }}
+      toolbox: ${{ steps.wayfinder.outputs.toolbox }}
     steps:
-    - name: Current Wayfinder version
-      id: version
-      env:
-        WAYFINDER_SERVER: ${{ vars.WAYFINDER_SERVER }}
-        WAYFINDER_TOKEN: ${{ secrets.WAYFINDER_TOKEN }}
-      run: echo "WAYFINDER_VERSION=$(wf serverinfo -o yaml | grep release | awk '{print $2}')" >> $GITHUB_OUTPUT
-    - name: Wayfinder toolbox image
-      id: toolbox
-      run: |
-        if [[ "${{ steps.version.outputs.WAYFINDER_VERSION }}" = *-* ]]; then
-          echo "WAYFINDER_TOOLBOX_IMAGE=quay.io/appvia-wf-dev/wftoolbox:${{ steps.version.outputs.WAYFINDER_VERSION }}" >> $GITHUB_OUTPUT
-        else
-          echo "WAYFINDER_TOOLBOX_IMAGE=quay.io/appvia-wayfinder/wftoolbox:${{ steps.version.outputs.WAYFINDER_VERSION }}" >> $GITHUB_OUTPUT
-        fi
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Wayfinder toolbox version
+        id: wayfinder
+        # To use this syntax, we must have the repository checked out
+        uses: ./.github/actions/wayfinder-toolbox-version
 
   teardown-preview:
     runs-on: ubuntu-latest
@@ -40,14 +38,8 @@ jobs:
       image: ${{ needs.wf.outputs.toolbox }}
     steps:
       - name: Clean up old resources
-        env:
-          WAYFINDER_SERVER: ${{ vars.WAYFINDER_SERVER }}
-          WAYFINDER_WORKSPACE: ${{ vars.WAYFINDER_WORKSPACE }}
-          WAYFINDER_TOKEN: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}
         run: |
-          {% endraw %}
-          export APP_NAME="${{ values.name }}"
-          {% raw %}
-          export PREVIEW_ENV="${APP_NAME}-pr-${{ github.event.pull_request.number }}"
+          export PREVIEW_ENV="${{ vars.APPLICATION_NAME }}-pr-${{ github.event.pull_request.number }}"
           wf delete appenv ${PREVIEW_ENV}
+
 {% endraw %}

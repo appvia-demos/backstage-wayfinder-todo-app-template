@@ -1,0 +1,33 @@
+{% raw %}
+name: Wayfinder Apply (composite steps)
+description: Applies Wayfinder manifests to the target environment
+# Schema: https://json.schemastore.org/github-action.json
+
+# Runs on the same runner and same work area as the main workflow.
+# No need to use 'build artifacts' to share files with the main workflow.
+# Env variables are inherited.
+# Secrets are not available -- must be passed explicitly as inputs or env vars.
+
+# inputs:
+#   example_input:
+#     description: 'Input to the reusable workflow'
+#     required: true
+#   other_example_input:
+#     required: true
+# outputs:
+#   example_output: 
+#     description: Some description of the output
+#     value: value goes here
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Wayfinder apply
+      id: apply
+      shell: bash
+      run: |
+        wf apply -f ./wayfinder --owner ${WAYFINDER_RESOURCE_OWNER} --prune --prune-scope all --wait-for-ready 5m --confirm
+        wf deploy app ${APP_NAME} ${APP_STAGE} --component-container-image app=app=${APP_IMAGE_TAG}
+
+{% endraw %}
+

@@ -1,0 +1,41 @@
+{% raw %}
+name: Wayfinder toolbox version (composite steps)
+description: Extracts current Wayfinder version and determines toolbox image for use in other workflows
+# Schema: https://json.schemastore.org/github-action.json
+
+# Runs on the same runner and same work area as the main workflow.
+# No need to use 'build artifacts' to share files with the main workflow.
+# Env variables are inherited.
+# Secrets are not available -- must be passed explicitly as inputs or env vars.
+
+# inputs:
+#   example_input:
+#     description: 'Input to the reusable workflow'
+#     required: true
+#   other_example_input:
+#     required: true
+outputs:
+  version:
+    description: 'Wayfinder version'
+    value: ${{ steps.version.outputs.WAYFINDER_VERSION }}
+  toolbox:
+    description: 'Wayfinder toolbox image'
+    value: ${{ steps.toolbox.outputs.WAYFINDER_TOOLBOX_IMAGE }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Current Wayfinder version
+      id: version
+      shell: bash
+      run: echo "WAYFINDER_VERSION=$(wf serverinfo -oyaml | yq .version.release)" >> $GITHUB_OUTPUT
+    - name: Wayfinder toolbox image
+      id: toolbox
+      shell: bash
+      run: |
+        if [[ "${{ steps.version.outputs.WAYFINDER_VERSION }}" = *-* ]]; then
+          echo "WAYFINDER_TOOLBOX_IMAGE=quay.io/appvia-wf-dev/wftoolbox:${{ steps.version.outputs.WAYFINDER_VERSION }}" >> $GITHUB_OUTPUT
+        else
+          echo "WAYFINDER_TOOLBOX_IMAGE=quay.io/appvia-wayfinder/wftoolbox:${{ steps.version.outputs.WAYFINDER_VERSION }}" >> $GITHUB_OUTPUT
+        fi
+{% endraw %}
