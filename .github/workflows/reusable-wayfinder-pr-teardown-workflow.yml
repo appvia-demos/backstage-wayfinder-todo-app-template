@@ -1,0 +1,60 @@
+{% raw %}
+name: Wayfinder PR teardown workflow
+
+on:
+  workflow_call:
+    inputs:
+      wayfinder-server:
+        description: 'Wayfinder server URL'
+        required: true
+        type: string
+      wayfinder-workspace:
+        description: 'Wayfinder workspace name'
+        required: true
+        type: string
+      application-name:
+        description: 'Application name'
+        required: true
+        type: string
+    secrets:
+      wayfinder-token:
+        description: 'Wayfinder token'
+        required: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  WAYFINDER_SERVER: ${{ inputs.wayfinder-server }}
+  WAYFINDER_TOKEN: ${{ secrets.wayfinder-token }}
+  WAYFINDER_WORKSPACE: ${{ inputs.wayfinder-workspace }}
+  PREVIEW_ENV: ${{ inputs.application-name }}-pr-${{ github.event.pull_request.number }}
+
+jobs:
+  wf:
+    name: "Wayfinder toolbox"
+    runs-on: ubuntu-latest
+    container: quay.io/appvia-wf-dev/wftoolbox:latest
+    outputs:
+      version: ${{ steps.wayfinder.outputs.version }}
+      toolbox: ${{ steps.wayfinder.outputs.toolbox }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Wayfinder toolbox version
+        id: wayfinder
+        # To use this syntax, we must have the repository checked out
+        uses: ./.github/actions/wayfinder-toolbox-version
+
+  teardown-preview:
+    runs-on: ubuntu-latest
+    needs: 
+      - wf
+    container:
+      image: ${{ needs.wf.outputs.toolbox }}
+    steps:
+      - name: Clean up PR preview resources
+        run: |
+          wf delete appenv ${PREVIEW_ENV}
+{% endraw %}

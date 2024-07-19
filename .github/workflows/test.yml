@@ -1,4 +1,4 @@
-name: Create and test a Docker image
+name: PR tests
 
 on:
   pull_request:

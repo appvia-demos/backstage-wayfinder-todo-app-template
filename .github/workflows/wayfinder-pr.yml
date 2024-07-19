@@ -1,5 +1,5 @@
 {% raw %}
-name: Wayfinder validate manifests for deployment
+name: Validate WF config and create app preview
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ permissions:
   packages: write
 
 jobs:
-  wayfinder-pr:
+  pr:
     uses: ./.github/workflows/reusable-wayfinder-pr-workflow.yml
     secrets:
       wayfinder-token: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}

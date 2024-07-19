@@ -1,0 +1,20 @@
+{% raw %}
+name: Teardown Wayfinder preview environment
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  teardown:
+    uses: ./.github/workflows/reusable-wayfinder-pr-teardown-workflow.yml
+    secrets:
+      wayfinder-token: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}
+    with:
+      wayfinder-server: ${{ vars.WAYFINDER_SERVER }}
+      wayfinder-workspace: ${{ vars.WAYFINDER_WORKSPACE }}
+      application-name: ${{ vars.APPLICATION_NAME }}
+{% endraw %}

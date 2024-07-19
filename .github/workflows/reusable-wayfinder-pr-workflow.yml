@@ -1,5 +1,5 @@
 {% raw %}
-name: Reusable Wayfinder PR validation workflow with a preview environment
+name: Wayfinder PR validation workflow with a preview environment
 
 on:
   workflow_call:
