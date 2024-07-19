@@ -13,22 +13,17 @@ permissions:
   pull-requests: write
   packages: write
 
-# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   wayfinder-pr:
     uses: ./.github/workflows/reusable-wayfinder-pr-workflow.yml
     secrets:
       wayfinder-token: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}
     with:
-      registry: ${REGISTRY}
-      image-name: ${IMAGE_NAME}
+      registry: ghcr.io
+      image-name: ${{ github.repository }}
       wayfinder-server: ${{ vars.WAYFINDER_SERVER }}
       wayfinder-workspace: ${{ vars.WAYFINDER_WORKSPACE }}
       wayfinder-resource-owner: ${{ vars.WAYFINDER_RESOURCE_OWNER }}
       application-name: ${{ vars.APPLICATION_NAME }}
-{% endraw -%}
+{% endraw %}
       cluster: ${{ values.nonProdClusterName }}
