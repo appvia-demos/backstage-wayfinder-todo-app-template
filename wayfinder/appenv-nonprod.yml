@@ -3,14 +3,14 @@
 apiVersion: app.appvia.io/v2beta1
 kind: AppEnv
 metadata:
-  name: ${{ values.name }}-${{ values.prodClusterStage }}
+  name: ${{ values.name }}-${{ values.nonProdClusterStage }}
 spec:
   application: ${{ values.name }}
   cloud: ${{ values.cloud }}
   clusterRef:
     group: compute.appvia.io
     kind: Cluster
-    name: ${{ values.prodClusterName }}
+    name: ${{ values.nonProdClusterName }}
     version: v2beta2
-  name: ${{ values.prodClusterStage }}
-  stage: ${{ values.prodClusterStage }}
+  name: ${{ values.nonProdClusterStage }}
+  stage: ${{ values.nonProdClusterStage }}
