@@ -3,7 +3,6 @@ apiVersion: app.appvia.io/v2beta1
 kind: AppComponent
 metadata:
   name: ${{ values.name }}-mysql
-  namespace: ws-${{ values.workspaceKey }}
 spec:
   application: ${{ values.name }}
   container:
@@ -30,7 +29,6 @@ apiVersion: app.appvia.io/v2beta1
 kind: AppComponent
 metadata:
   name: ${{ values.name }}-app
-  namespace: ws-${{ values.workspaceKey }}
 spec:
   application: ${{ values.name }}
   container:
