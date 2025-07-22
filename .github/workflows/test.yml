@@ -1,11 +1,13 @@
-name: Create and test a Docker image
+name: CI/CD Pipeline
 
 on:
   pull_request:
     branches: ['main']
+  push:
+    branches: ['main']
 
 jobs:
-  build-and-test-image:
+  test-and-publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -13,14 +15,84 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Disable shallow clone for SonarCloud analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install app dependencies
+        working-directory: ./app
+        run: npm install
+
+      - name: Run app tests with coverage
+        working-directory: ./app
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-template'
+        run: |
+          # Extract image name from GitHub repository
+          IMAGE_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          
+          # Login to JFrog Artifactory
+          ARTIFACTORY_HOST=$(echo "${{ secrets.ARTIFACTORY_URL }}" | sed 's|https://||')
+          echo "${{ secrets.ARTIFACTORY_ACCESS_TOKEN }}" | docker login ${ARTIFACTORY_HOST} -u ${{ secrets.ARTIFACTORY_USERNAME }} --password-stdin
+          
+          # Build and tag the image
+          docker build -t ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:latest .
+          docker build -t ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:${{ github.sha }} .
+          
+          # Push both tags
+          docker push ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:latest
+          docker push ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:${{ github.sha }}
 
       - name: Start containers
         run: docker compose up --build --detach
 
-      - name: Run test
+      - name: Run integration test
         run: |
           docker ps
           for i in {1..10}; do curl -m 10 -s localhost:3000 | grep 'Appvia Todo List' && echo "[Attempt $i] Endpoint returned expected response." && exit 0 || echo "[Attempt $i] Endpoint not returning expected response, retrying in 5 seconds.." && sleep 5; done; exit 1
 
       - name: Stop containers
         run: docker compose down
+
+      - name: Setup SonarQube project
+        if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-template'
+        run: |
+          # Create SonarQube project if it doesn't exist
+          PROJECT_KEY="${{ github.repository_owner }}_${{ github.event.repository.name }}"
+          PROJECT_NAME="${{ github.event.repository.name }}"
+          
+          # Check if project exists
+          PROJECT_EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "${{ secrets.SONAR_HOST_URL }}/api/projects/search?projects=${PROJECT_KEY}" | \
+            jq -r '.components | length')
+          
+          if [ "$PROJECT_EXISTS" -eq "0" ]; then
+            echo "Creating SonarQube project: $PROJECT_KEY"
+            curl -s -X POST -u "${{ secrets.SONAR_TOKEN }}:" \
+              "${{ secrets.SONAR_HOST_URL }}/api/projects/create" \
+              -d "organization=appvia-demos" \
+              -d "project=${PROJECT_KEY}" \
+              -d "name=${PROJECT_NAME}" \
+              -d "visibility=private" \
+              -d "mainBranchName=main"
+          else
+            echo "SonarQube project already exists: $PROJECT_KEY"
+          fi
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
+
+      - name: SonarQube Scan
+        if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-template'
+        uses: SonarSource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} 

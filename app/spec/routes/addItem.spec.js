@@ -2,7 +2,9 @@ const db = require('../../src/persistence');
 const addItem = require('../../src/routes/addItem');
 const uuid = require('uuid');
 
-jest.mock('uuid', () => jest.fn());
+jest.mock('uuid', () => ({
+    v4: jest.fn()
+}));
 
 jest.mock('../../src/persistence', () => ({
     removeItem: jest.fn(),
