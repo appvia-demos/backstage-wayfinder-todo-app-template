@@ -1,13 +1,11 @@
-name: CI/CD Pipeline
+name: Create and test a Docker image
 
 on:
   pull_request:
     branches: ['main']
-  push:
-    branches: ['main']
 
 jobs:
-  test-and-publish:
+  build-and-test-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read

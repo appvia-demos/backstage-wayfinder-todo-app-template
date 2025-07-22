@@ -1,7 +1,5 @@
 const db = require('../persistence');
 const uuid = require('uuid');
-// Note: In production, this would be imported from the published package:
-// const { validateTodoName, sanitizeTodoName } = require('@{owner}/{name}-utils');
 
 // For template purposes, we'll include simple validation inline
 const validateTodoName = (name) => {
