@@ -11,7 +11,6 @@ This is a simple demo nodejs todo app which depends on a MySQL database. It allo
 ## Installation
 
 1. Clone the repository: `git clone https://github.com/appvia/todo-app.git`
-2. Run docker compose up --build --detach
 
 ## 🔧 Required GitHub Secrets
 
