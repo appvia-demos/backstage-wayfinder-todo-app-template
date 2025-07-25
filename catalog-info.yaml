@@ -10,7 +10,7 @@ metadata:
     github.com/project-slug: ${{values.repo.owner + "/" + values.repo.repo}}
     sonarqube.org/project-key: ${{values.repo.owner + "_" + values.repo.repo}}
     backstage.io/techdocs-ref: dir:.
-    jfrog-artifactory/image-name: ${{ values.dockerRepository }}/${{ values.name }}
+    jfrog-artifactory/image-name: ${{ values.artifactoryDockerRepo }}/${{ values.name }}
     wayfinder/workspace: ${{ values.workspaceKey }}    
     wayfinder/app-name: ${{ values.name }}
     wayfinder/app-component-name: ${{ values.name }}-app
@@ -37,7 +37,7 @@ metadata:
       title: Production Backstage
       type: Backstage
       icon: backstage
-    - url: https://${{ values.artifactoryUrl }}/ui/repos/tree/General/${{ values.dockerRepository }}/${{ values.name }}
+    - url: https://${{ values.artifactoryUrl }}/ui/repos/tree/General/${{ values.artifactoryDockerRepo }}/${{ values.name }}
       title: JFrog Artifactory
       type: Docker Registry
       icon: artifactory
