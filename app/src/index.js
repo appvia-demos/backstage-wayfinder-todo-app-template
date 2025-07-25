@@ -9,6 +9,12 @@ const deleteItem = require('./routes/deleteItem');
 app.use(express.json());
 app.use(express.static(__dirname + '/static'));
 
+// Serve OpenAPI specification
+app.get('/openapi.yaml', (req, res) => {
+    res.sendFile('openapi.yaml', { root: __dirname + '/..' });
+});
+
+// API endpoints
 app.get('/items', getItems);
 app.post('/items', addItem);
 app.put('/items/:id', updateItem);

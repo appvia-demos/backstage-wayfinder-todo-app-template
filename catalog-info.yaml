@@ -8,6 +8,9 @@ metadata:
   annotations:
     backstage.io/source-location: url:https://${{values.repo.host + "/" + values.repo.owner + "/" + values.repo.repo}}
     github.com/project-slug: ${{values.repo.owner + "/" + values.repo.repo}}
+    sonarqube.org/project-key: ${{values.repo.owner + "_" + values.repo.repo}}
+    backstage.io/techdocs-ref: dir:.
+    jfrog-artifactory/image-name: ${{ values.artifactoryDockerRepo }}/${{ values.name }}
     wayfinder/workspace: ${{ values.workspaceKey }}    
     wayfinder/app-name: ${{ values.name }}
     wayfinder/app-component-name: ${{ values.name }}-app
@@ -17,12 +20,35 @@ metadata:
     - url: https://${{values.repo.host + "/" + values.repo.owner + "/" + values.repo.repo}}
       title: GitHub Repository
       type: Code
+      icon: github
+    - url: https://${{values.repo.host + "/" + values.repo.owner + "/" + values.repo.repo}}/actions
+      title: GitHub Actions
+      type: CI/CD
+      icon: github
+    - url: https://${{values.repo.host + "/" + values.repo.owner + "/" + values.repo.repo}}/releases
+      title: Releases
+      type: Release
+      icon: github
+    - url: https://sonarcloud.io/project/overview?id=${{values.repo.owner + "_" + values.repo.repo}}
+      title: SonarCloud Quality Gate
+      type: Quality
+      icon: sonarcloud
+    - url: https://portal.backstage.prod.wf.appvia.io/catalog/default/component/${{ values.name }}-app
+      title: Production Backstage
+      type: Backstage
+      icon: backstage
+    - url: https://${{ values.artifactoryUrl }}/ui/repos/tree/General/${{ values.artifactoryDockerRepo }}/${{ values.name }}
+      title: JFrog Artifactory
+      type: Docker Registry
+      icon: artifactory
 spec:
   type: service
   owner: ${{ values.owner }}
   lifecycle: experimental
   dependsOn:
     - resource:default/${{ values.name }}-mysql
+  providesApis:
+    - ${{ values.name }}-api
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Resource
@@ -34,6 +60,8 @@ metadata:
   annotations:
     backstage.io/source-location: url:https://${{values.repo.host + "/" + values.repo.owner + "/" + values.repo.repo}}
     github.com/project-slug: ${{values.repo.owner + "/" + values.repo.repo}}
+    sonarqube.org/project-key: ${{values.repo.owner + "_" + values.repo.repo}}
+    backstage.io/techdocs-ref: dir:.
     wayfinder/workspace: ${{ values.workspaceKey }}
     wayfinder/app-name: ${{ values.name }}
     wayfinder/app-component-name: ${{ values.name }}-mysql
@@ -47,3 +75,33 @@ spec:
   type: database
   owner: ${{ values.owner }}
   lifecycle: experimental
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}-frontend
+  description: Frontend UI for the ${{ values.name }} todo application
+  labels: {}
+  annotations:
+    backstage.io/source-location: url:https://${{values.repo.host + "/" + values.repo.owner + "/" + values.repo.repo}}
+    github.com/project-slug: ${{values.repo.owner + "/" + values.repo.repo}}
+    backstage.io/techdocs-ref: dir:.
+    wayfinder/workspace: ${{ values.workspaceKey }}
+    wayfinder/app-name: ${{ values.name }}
+    wayfinder/app-component-name: ${{ values.name }}-frontend
+  tags:
+    - wayfinder
+    - frontend
+    - react
+  links:
+    - url: https://${{values.repo.host + "/" + values.repo.owner + "/" + values.repo.repo}}/tree/main/app/src/static
+      title: Frontend Source Code
+      type: Code
+      icon: github
+spec:
+  type: website
+  owner: ${{ values.owner }}
+  lifecycle: experimental
+  partOf: ${{ values.name }}-app
+  consumesApis:
+    - ${{ values.name }}-api
